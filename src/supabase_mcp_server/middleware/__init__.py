@@ -1,0 +1,1 @@
+"""Middleware package for Supabase MCP Server."""

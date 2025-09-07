@@ -1,0 +1,1 @@
+"""Test package for Supabase MCP Server."""

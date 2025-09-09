@@ -57,21 +57,29 @@ install_debian() {
     fi
     
     echo -e "${YELLOW}📦 Instalando Python 3.11...${NC}"
-    sudo apt install -y python3.11 python3.11-pip python3.11-venv python3.11-dev python3.11-distutils
+    sudo apt install -y python3.11 python3.11-venv python3.11-dev python3.11-distutils
     
     # Verificar se python3.11 foi instalado corretamente
     if ! command -v python3.11 &> /dev/null; then
         echo -e "${RED}❌ Falha ao instalar Python 3.11${NC}"
         echo -e "${YELLOW}💡 Tentando instalar Python 3.10 como alternativa...${NC}"
-        sudo apt install -y python3.10 python3.10-pip python3.10-venv python3.10-dev
+        sudo apt install -y python3.10 python3.10-venv python3.10-dev python3.10-distutils
         PYTHON_VERSION="python3.10"
     else
         echo -e "${GREEN}✅ Python 3.11 instalado com sucesso${NC}"
         PYTHON_VERSION="python3.11"
     fi
     
-    # Instalar pip para a versão do Python
+    # Instalar pip para a versão do Python (deadsnakes não inclui pip)
+    echo -e "${YELLOW}📦 Instalando pip para ${PYTHON_VERSION}...${NC}"
     curl -sS https://bootstrap.pypa.io/get-pip.py | sudo $PYTHON_VERSION
+    
+    # Verificar se pip foi instalado
+    if ! $PYTHON_VERSION -m pip --version &> /dev/null; then
+        echo -e "${YELLOW}💡 Tentando método alternativo para instalar pip...${NC}"
+        sudo apt install -y python3-pip
+        sudo $PYTHON_VERSION -m ensurepip --upgrade
+    fi
 }
 
 # Função para instalar dependências no RedHat/CentOS

@@ -15,7 +15,7 @@ git push origin main
 ssh user@seu-vps.com
 
 # Instalar automaticamente
-curl -sSL https://raw.githubusercontent.com/SEU_USUARIO/supabase-mcp-server/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/MakeToMe/mcp_supabase_self-hosted/main/install.sh | bash
 ```
 
 ### 3. ⚙️ Configurar Variáveis Supabase

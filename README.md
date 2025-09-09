@@ -6,13 +6,13 @@ A Model Context Protocol (MCP) server for Supabase self-hosted instances, enabli
 
 ### One-Line Installation
 ```bash
-curl -sSL https://raw.githubusercontent.com/SEU_USUARIO/supabase-mcp-server/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/MakeToMe/mcp_supabase_self-hosted/main/install.sh | bash
 ```
 
 ### Manual Installation
 ```bash
-git clone https://github.com/SEU_USUARIO/supabase-mcp-server.git
-cd supabase-mcp-server
+git clone https://github.com/MakeToMe/mcp_supabase_self-hosted.git
+cd mcp_supabase_self-hosted
 chmod +x install.sh && ./install.sh
 ```
 
@@ -24,7 +24,7 @@ git init
 git add .
 git commit -m "Initial commit: Supabase MCP Server"
 git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/supabase-mcp-server.git
+git remote add origin https://github.com/MakeToMe/mcp_supabase_self-hosted.git
 git push -u origin main
 ```
 
@@ -34,8 +34,8 @@ git push -u origin main
 ssh user@seu-vps.com
 
 # Clonar e instalar
-git clone https://github.com/SEU_USUARIO/supabase-mcp-server.git
-cd supabase-mcp-server
+git clone https://github.com/MakeToMe/mcp_supabase_self-hosted.git
+cd mcp_supabase_self-hosted
 chmod +x install.sh && ./install.sh
 ```
 
@@ -209,7 +209,7 @@ sudo journalctl -u supabase-mcp.service -f
 
 - 📖 [Guia Completo de Deploy](DEPLOY_GUIDE.md)
 - 🔧 [Configurações para IAs](configs/)
-- 🐛 [Issues](https://github.com/SEU_USUARIO/supabase-mcp-server/issues)
+- 🐛 [Issues](https://github.com/MakeToMe/mcp_supabase_self-hosted/issues)
 
 ## 🎉 Pronto para Usar!
 

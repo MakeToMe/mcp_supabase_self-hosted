@@ -6,7 +6,7 @@ Este guia fornece instruções completas para fazer deploy do servidor MCP Supab
 
 ### 1.1 Criar repositório no GitHub
 1. Acesse [GitHub](https://github.com) e crie um novo repositório
-2. Nome sugerido: `supabase-mcp-server`
+2. Nome sugerido: `mcp_supabase_self-hosted`
 3. Marque como público ou privado conforme necessário
 
 ### 1.2 Subir o projeto
@@ -16,7 +16,7 @@ git init
 git add .
 git commit -m "Initial commit: Supabase MCP Server"
 git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/supabase-mcp-server.git
+git remote add origin https://github.com/MakeToMe/mcp_supabase_self-hosted.git
 git push -u origin main
 ```
 
@@ -52,8 +52,8 @@ export PATH="$HOME/.local/bin:$PATH"
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 # Clonar repositório
-git clone https://github.com/SEU_USUARIO/supabase-mcp-server.git
-cd supabase-mcp-server
+git clone https://github.com/MakeToMe/mcp_supabase_self-hosted.git
+cd mcp_supabase_self-hosted
 
 # Instalar dependências
 poetry install
@@ -141,7 +141,7 @@ After=network.target
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/home/ubuntu/supabase-mcp-server
+WorkingDirectory=/home/ubuntu/mcp_supabase_self-hosted
 Environment=PATH=/home/ubuntu/.local/bin
 ExecStart=/home/ubuntu/.local/bin/poetry run python -m supabase_mcp_server.main
 Restart=always
@@ -325,8 +325,8 @@ systemctl status supabase-mcp.service
 
 ```bash
 # 1. Clonar e instalar
-git clone https://github.com/SEU_USUARIO/supabase-mcp-server.git
-cd supabase-mcp-server
+git clone https://github.com/MakeToMe/mcp_supabase_self-hosted.git
+cd mcp_supabase_self-hosted
 chmod +x install.sh && ./install.sh
 
 # 2. Configurar

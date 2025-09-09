@@ -11,7 +11,7 @@ from supabase_mcp_server.core.logging import get_logger
 from supabase_mcp_server.mcp.handler import MCPHandler, deserialize_mcp_message, serialize_mcp_message
 from supabase_mcp_server.mcp.models import MCPError, MCPResponse
 from supabase_mcp_server.middleware.auth import auth_middleware, AuthContext
-from supabase_mcp_server.middleware.rate_limit import security_middleware, RateLimitExceeded
+from supabase_mcp_server.middleware.rate_limit import get_security_middleware, RateLimitExceeded
 from supabase_mcp_server.services.metrics import metrics_service
 
 logger = get_logger(__name__)
@@ -40,6 +40,8 @@ class MCPServer:
             """HTTP endpoint to list available tools."""
             try:
                 # Apply security checks
+                security_middleware = get_security_middleware()
+                await security_middleware.initialize()
                 await security_middleware.check_rate_limit(request)
                 await security_middleware.check_security_threats(request)
                 

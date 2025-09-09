@@ -30,8 +30,8 @@ async def lifespan(app: FastAPI):
     # Initialize database service
     await database_service.initialize()
     
-    # Initialize Supabase API service
-    await supabase_api_service.initialize()
+    # Initialize Supabase API service (temporarily disabled due to version conflict)
+    # await supabase_api_service.initialize()
     
     # Initialize MCP handler and server
     mcp_handler = SupabaseMCPHandler()

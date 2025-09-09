@@ -42,17 +42,10 @@ class SupabaseAPIService:
         try:
             logger.info("Initializing Supabase API client")
             
-            # Create client options
-            options = ClientOptions(
-                auto_refresh_token=False,  # We're using service role key
-                persist_session=False,    # No session persistence needed
-            )
-            
-            # Create Supabase client
+            # Create Supabase client with minimal options
             self._client = create_client(
                 supabase_url=self.settings.supabase_url,
-                supabase_key=self.settings.supabase_service_role_key,
-                options=options
+                supabase_key=self.settings.supabase_service_role_key
             )
             
             # Test connection

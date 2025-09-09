@@ -1,0 +1,161 @@
+{
+  "name": "Supabase MCP Server",
+  "description": "Configuração genérica para acesso HTTP ao servidor MCP Supabase",
+  "version": "1.0.0",
+  "server": {
+    "url": "http://localhost:8001",
+    "authentication": {
+      "type": "bearer",
+      "token": "sua-chave-api-segura-aqui"
+    }
+  },
+  "endpoints": {
+    "health": {
+      "method": "GET",
+      "path": "/health",
+      "description": "Verificar status do servidor"
+    },
+    "info": {
+      "method": "GET", 
+      "path": "/info",
+      "description": "Informações do servidor"
+    },
+    "list_tools": {
+      "method": "GET",
+      "path": "/mcp/tools",
+      "description": "Listar ferramentas disponíveis",
+      "headers": {
+        "Authorization": "Bearer sua-chave-api-segura-aqui"
+      }
+    },
+    "execute_tool": {
+      "method": "POST",
+      "path": "/mcp/execute",
+      "description": "Executar ferramenta MCP",
+      "headers": {
+        "Authorization": "Bearer sua-chave-api-segura-aqui",
+        "Content-Type": "application/json"
+      },
+      "body_schema": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "Nome da ferramenta"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Parâmetros da ferramenta"
+          }
+        },
+        "required": ["tool", "parameters"]
+      }
+    }
+  },
+  "tools": {
+    "query_database": {
+      "description": "Executar queries SQL no PostgreSQL",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "Query SQL para executar"
+        }
+      },
+      "example": {
+        "tool": "query_database",
+        "parameters": {
+          "query": "SELECT * FROM users LIMIT 5"
+        }
+      }
+    },
+    "get_schema": {
+      "description": "Obter informações do schema do banco",
+      "parameters": {
+        "schema_name": {
+          "type": "string",
+          "description": "Nome do schema (opcional, padrão: public)"
+        }
+      },
+      "example": {
+        "tool": "get_schema",
+        "parameters": {
+          "schema_name": "public"
+        }
+      }
+    },
+    "crud_operations": {
+      "description": "Operações CRUD via API Supabase",
+      "parameters": {
+        "operation": {
+          "type": "string",
+          "enum": ["select", "insert", "update", "delete"]
+        },
+        "table": {
+          "type": "string",
+          "description": "Nome da tabela"
+        },
+        "data": {
+          "type": "object",
+          "description": "Dados para insert/update"
+        },
+        "filters": {
+          "type": "object",
+          "description": "Filtros para select/update/delete"
+        }
+      },
+      "example": {
+        "tool": "crud_operations",
+        "parameters": {
+          "operation": "select",
+          "table": "users",
+          "filters": {"active": true}
+        }
+      }
+    },
+    "storage_operations": {
+      "description": "Gerenciar arquivos no Supabase Storage",
+      "parameters": {
+        "operation": {
+          "type": "string",
+          "enum": ["list", "upload", "download", "delete"]
+        },
+        "bucket": {
+          "type": "string",
+          "description": "Nome do bucket"
+        },
+        "path": {
+          "type": "string",
+          "description": "Caminho do arquivo"
+        }
+      },
+      "example": {
+        "tool": "storage_operations",
+        "parameters": {
+          "operation": "list",
+          "bucket": "avatars"
+        }
+      }
+    },
+    "get_metrics": {
+      "description": "Obter métricas de performance",
+      "parameters": {},
+      "example": {
+        "tool": "get_metrics",
+        "parameters": {}
+      }
+    }
+  },
+  "examples": {
+    "curl_commands": {
+      "health_check": "curl http://localhost:8001/health",
+      "list_tools": "curl -H 'Authorization: Bearer sua-chave-api' http://localhost:8001/mcp/tools",
+      "execute_query": "curl -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer sua-chave-api' -d '{\"tool\": \"query_database\", \"parameters\": {\"query\": \"SELECT * FROM users LIMIT 5\"}}' http://localhost:8001/mcp/execute"
+    },
+    "javascript": {
+      "fetch_example": "fetch('http://localhost:8001/mcp/tools', { headers: { 'Authorization': 'Bearer sua-chave-api' } })"
+    },
+    "python": {
+      "requests_example": "import requests; requests.get('http://localhost:8001/mcp/tools', headers={'Authorization': 'Bearer sua-chave-api'})"
+    }
+  }
+}

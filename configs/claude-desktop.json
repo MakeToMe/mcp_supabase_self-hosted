@@ -1,0 +1,41 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "node",
+      "args": ["-e", "
+        const http = require('http');
+        const url = require('url');
+        
+        const serverUrl = process.env.MCP_SERVER_URL || 'http://localhost:8001';
+        const apiKey = process.env.MCP_API_KEY;
+        
+        process.stdin.on('data', (data) => {
+          const request = JSON.parse(data.toString());
+          
+          const options = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            }
+          };
+          
+          const req = http.request(serverUrl + '/mcp', options, (res) => {
+            let responseData = '';
+            res.on('data', (chunk) => responseData += chunk);
+            res.on('end', () => {
+              process.stdout.write(responseData);
+            });
+          });
+          
+          req.write(JSON.stringify(request));
+          req.end();
+        });
+      "],
+      "env": {
+        "MCP_SERVER_URL": "http://localhost:8001",
+        "MCP_API_KEY": "sua-chave-api-segura-aqui"
+      }
+    }
+  }
+}

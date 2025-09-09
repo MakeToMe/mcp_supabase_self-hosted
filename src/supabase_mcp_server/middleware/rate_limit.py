@@ -80,8 +80,13 @@ class SecurityMiddleware:
             "bot", "crawler", "spider", "scraper"
         ]
         
-        # Start cleanup task
-        self._cleanup_task = asyncio.create_task(self._cleanup_loop())
+        # Cleanup task will be started when needed
+        self._cleanup_task = None
+    
+    async def initialize(self) -> None:
+        """Initialize the middleware with async components."""
+        if self._cleanup_task is None:
+            self._cleanup_task = asyncio.create_task(self._cleanup_loop())
     
     async def check_rate_limit(self, request: Request) -> None:
         """Check if request should be rate limited."""
@@ -471,5 +476,12 @@ class SecurityMiddleware:
         }
 
 
-# Global security middleware instance
-security_middleware = SecurityMiddleware()
+# Global security middleware instance (will be initialized later)
+security_middleware = None
+
+def get_security_middleware() -> SecurityMiddleware:
+    """Get or create the security middleware instance."""
+    global security_middleware
+    if security_middleware is None:
+        security_middleware = SecurityMiddleware()
+    return security_middleware

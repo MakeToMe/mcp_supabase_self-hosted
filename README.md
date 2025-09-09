@@ -2,204 +2,222 @@
 
 A Model Context Protocol (MCP) server for Supabase self-hosted instances, enabling AI assistants to interact directly with your PostgreSQL database and Supabase services.
 
-## Features
+## 🚀 Quick Deploy
 
-- 🔌 **MCP Protocol Support**: Full implementation of the Model Context Protocol
-- 🐘 **PostgreSQL Integration**: Direct database access with connection pooling
-- 🚀 **Supabase API Integration**: CRUD operations, Storage, and Edge Functions
-- 🔒 **Security First**: JWT authentication, rate limiting, and query validation
-- 📊 **Monitoring**: Structured logging, Prometheus metrics, and health checks
-- 🐳 **Docker Ready**: Containerized deployment with Docker Compose
-- 🔧 **Easy Setup**: Simple configuration with environment variables
-
-## Quick Start
-
-### Prerequisites
-
-- Docker and Docker Compose
-- Supabase self-hosted instance
-- Python 3.11+ (for development)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/supabase-mcp-server.git
-   cd supabase-mcp-server
-   ```
-
-2. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Supabase credentials
-   ```
-
-3. **Deploy with Docker Compose**
-   ```bash
-   # For standalone deployment
-   docker-compose up -d
-   
-   # For integration with existing Supabase stack
-   docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
-   ```
-
-4. **Verify deployment**
-   ```bash
-   curl http://localhost:8000/health
-   ```
-
-### Configuration
-
-Create a `.env` file with your Supabase configuration:
-
-```env
-# Supabase Configuration
-SUPABASE_URL=https://your-instance.supabase.co
-SUPABASE_ANON_KEY=your-anon-key-here
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
-
-# Database Configuration
-DATABASE_URL=postgresql://postgres:your-password@localhost:5432/postgres
-
-# Security Configuration
-MCP_API_KEY=your-generated-api-key-here
+### One-Line Installation
+```bash
+curl -sSL https://raw.githubusercontent.com/SEU_USUARIO/supabase-mcp-server/main/install.sh | bash
 ```
 
-### Client Configuration
+### Manual Installation
+```bash
+git clone https://github.com/SEU_USUARIO/supabase-mcp-server.git
+cd supabase-mcp-server
+chmod +x install.sh && ./install.sh
+```
 
-Configure your AI editor to connect to the MCP server:
+## 📋 Passo a Passo Completo
 
+### 1. Subir para GitHub
+```bash
+git init
+git add .
+git commit -m "Initial commit: Supabase MCP Server"
+git branch -M main
+git remote add origin https://github.com/SEU_USUARIO/supabase-mcp-server.git
+git push -u origin main
+```
+
+### 2. Deploy em VPS
+```bash
+# Conectar ao VPS
+ssh user@seu-vps.com
+
+# Clonar e instalar
+git clone https://github.com/SEU_USUARIO/supabase-mcp-server.git
+cd supabase-mcp-server
+chmod +x install.sh && ./install.sh
+```
+
+### 3. Configurar Variáveis Supabase
+```bash
+# Copiar template
+cp .env.example .env
+
+# Editar configurações
+nano .env
+```
+
+**Template .env:**
+```env
+# Supabase Configuration
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_ANON_KEY=sua-chave-anonima
+SUPABASE_SERVICE_ROLE_KEY=sua-chave-service-role
+
+# Database Configuration  
+DATABASE_URL=postgresql://postgres:senha@host:5432/postgres
+
+# Security Configuration
+MCP_API_KEY=sua-chave-api-segura
+SERVER_PORT=8001
+```
+
+### 4. Iniciar Servidor
+```bash
+# Modo desenvolvimento
+./start_server.sh
+
+# Modo produção (systemd)
+sudo cp supabase-mcp.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable supabase-mcp.service
+sudo systemctl start supabase-mcp.service
+```
+
+### 5. Configurações para IAs
+
+#### Claude Desktop
 ```json
 {
   "mcpServers": {
     "supabase": {
-      "command": "uvx",
-      "args": ["supabase-mcp-server-client@latest"],
+      "command": "curl",
+      "args": ["-H", "Authorization: Bearer SUA_CHAVE_API", "http://seu-servidor:8001/mcp/tools"],
       "env": {
-        "MCP_SERVER_URL": "https://mcp.yourdomain.com",
-        "MCP_API_KEY": "your-generated-api-key"
+        "MCP_SERVER_URL": "http://seu-servidor:8001",
+        "MCP_API_KEY": "sua-chave-api-segura"
       }
     }
   }
 }
 ```
 
-## Available MCP Tools
+#### OpenAI GPTs
+Use o arquivo `configs/openai-gpt.json` como schema OpenAPI.
 
-- **`query_database`**: Execute SQL queries on PostgreSQL
-- **`get_schema`**: Retrieve database schema information
-- **`crud_operations`**: Perform CRUD operations via Supabase API
-- **`storage_operations`**: Manage files in Supabase Storage
-- **`get_metrics`**: Retrieve server performance metrics
+#### Uso Genérico HTTP
+```bash
+# Listar ferramentas
+curl -H "Authorization: Bearer SUA_CHAVE_API" http://seu-servidor:8001/mcp/tools
 
-## Development
-
-### Setup Development Environment
-
-1. **Install Poetry**
-   ```bash
-   curl -sSL https://install.python-poetry.org | python3 -
-   ```
-
-2. **Install dependencies**
-   ```bash
-   poetry install
-   ```
-
-3. **Setup pre-commit hooks**
-   ```bash
-   poetry run pre-commit install
-   ```
-
-4. **Run tests**
-   ```bash
-   poetry run pytest
-   ```
-
-5. **Start development server**
-   ```bash
-   poetry run python -m supabase_mcp_server.main
-   ```
-
-### Project Structure
-
-```
-src/supabase_mcp_server/
-├── __init__.py
-├── main.py              # Application entry point
-├── config.py            # Configuration management
-├── core/                # Core utilities
-│   ├── logging.py       # Structured logging
-│   └── ...
-├── mcp/                 # MCP protocol implementation
-├── services/            # Business logic services
-├── models/              # Data models
-└── utils/               # Utility functions
+# Executar query
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SUA_CHAVE_API" \
+  -d '{"tool": "query_database", "parameters": {"query": "SELECT * FROM users LIMIT 5"}}' \
+  http://seu-servidor:8001/mcp/execute
 ```
 
-## Deployment
+## 🛠️ Ferramentas Disponíveis
 
-### Nginx Configuration
+- **`query_database`**: Executar queries SQL no PostgreSQL
+- **`get_schema`**: Obter informações do schema do banco
+- **`crud_operations`**: Operações CRUD via API Supabase
+- **`storage_operations`**: Gerenciar arquivos no Supabase Storage
+- **`get_metrics`**: Obter métricas de performance
 
-Add this configuration to your existing Nginx setup:
+## 🔧 Configuração Avançada
 
+### Nginx Proxy
 ```nginx
-# For subdomain deployment
 server {
-    server_name mcp.yourdomain.com;
-    client_max_body_size 100M;
+    listen 80;
+    server_name mcp.seu-dominio.com;
     
     location / {
-        proxy_pass http://localhost:8000;
+        proxy_pass http://localhost:8001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
     }
-    
-    listen 443 ssl;
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
 }
 ```
 
-### SSL Certificate
+### SSL com Let's Encrypt
+```bash
+sudo certbot --nginx -d mcp.seu-dominio.com
+```
 
-The server integrates with your existing SSL setup. No additional certificate configuration needed.
+### Firewall
+```bash
+sudo ufw allow 22
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw enable
+```
 
-## Security
+## 📊 Monitoramento
 
-- **Authentication**: API key-based authentication for MCP clients
-- **Rate Limiting**: Configurable rate limits per IP address
-- **Query Validation**: SQL injection prevention and dangerous query detection
-- **Audit Logging**: Complete audit trail of all database operations
-- **Network Security**: Runs in isolated Docker network
+### Health Check
+```bash
+curl http://seu-servidor:8001/health
+```
 
-## Monitoring
+### Logs
+```bash
+# Logs do serviço
+sudo journalctl -u supabase-mcp.service -f
 
-- **Health Checks**: `/health` endpoint for load balancer integration
-- **Metrics**: Prometheus metrics at `/metrics` endpoint
-- **Structured Logs**: JSON-formatted logs with correlation IDs
-- **Performance Tracking**: Query execution time and resource usage
+# Status
+systemctl status supabase-mcp.service
+```
 
-## Contributing
+### Métricas
+```bash
+curl http://seu-servidor:9090/metrics
+```
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Run the test suite
-6. Submit a pull request
+## 🔒 Segurança
 
-## License
+- ✅ Autenticação via API Key
+- ✅ Rate limiting configurável
+- ✅ Validação de queries SQL
+- ✅ Logs de auditoria
+- ✅ Isolamento de rede
 
-MIT License - see [LICENSE](LICENSE) file for details.
+## 📁 Estrutura do Projeto
 
-## Support
+```
+├── src/supabase_mcp_server/    # Código fonte
+├── configs/                    # Configurações para IAs
+├── install.sh                  # Script de instalação
+├── start_server.sh            # Script de inicialização
+├── DEPLOY_GUIDE.md            # Guia completo de deploy
+└── README.md                  # Este arquivo
+```
 
-- 📖 [Documentation](https://github.com/your-username/supabase-mcp-server/wiki)
-- 🐛 [Issue Tracker](https://github.com/your-username/supabase-mcp-server/issues)
-- 💬 [Discussions](https://github.com/your-username/supabase-mcp-server/discussions)
+## 🚨 Troubleshooting
+
+### Problemas Comuns
+- **Porta em uso**: Alterar `SERVER_PORT` no .env
+- **Conexão com banco**: Verificar `DATABASE_URL`
+- **Permissões**: Verificar usuário do systemd
+
+### Comandos Úteis
+```bash
+# Verificar status
+systemctl status supabase-mcp.service
+
+# Reiniciar serviço
+sudo systemctl restart supabase-mcp.service
+
+# Ver logs em tempo real
+sudo journalctl -u supabase-mcp.service -f
+```
+
+## 📚 Documentação
+
+- 📖 [Guia Completo de Deploy](DEPLOY_GUIDE.md)
+- 🔧 [Configurações para IAs](configs/)
+- 🐛 [Issues](https://github.com/SEU_USUARIO/supabase-mcp-server/issues)
+
+## 🎉 Pronto para Usar!
+
+Após seguir os passos acima, seu servidor MCP estará rodando e pronto para conectar com qualquer IA compatível!
+
+**Teste rápido:**
+```bash
+curl http://localhost:8001/health
+```
+
+Se retornar status 200, está funcionando! 🚀

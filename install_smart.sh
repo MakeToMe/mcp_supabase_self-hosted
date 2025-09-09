@@ -8,7 +8,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 Instalação Produção - Supabase MCP Server${NC}"
+echo -e "${BLUE}🚀 Instalação Inteligente - Supabase MCP Server${NC}"
 
 # Verificar se está rodando como root
 if [[ $EUID -eq 0 ]]; then
@@ -59,24 +59,24 @@ source venv/bin/activate
 echo -e "${YELLOW}📦 Atualizando pip...${NC}"
 pip install --upgrade pip
 
-# Instalar apenas dependências de produção (sem dev)
-echo -e "${YELLOW}📦 Instalando dependências de produção...${NC}"
-pip install \
-    fastapi==0.104.1 \
-    "uvicorn[standard]==0.24.0" \
-    pydantic==2.5.0 \
-    pydantic-settings==2.1.0 \
-    asyncpg==0.29.0 \
-    supabase==2.3.0 \
-    redis==5.0.1 \
-    prometheus-client==0.19.0 \
-    structlog==23.2.0 \
-    "python-jose[cryptography]==3.3.0" \
-    python-multipart==0.0.6 \
-    "httpx>=0.24.0,<0.25.0" \
-    tenacity==8.2.3
+# Instalar dependências em ordem inteligente (resolvendo conflitos)
+echo -e "${YELLOW}📦 Instalando dependências principais...${NC}"
+pip install fastapi uvicorn pydantic pydantic-settings
 
-echo -e "${GREEN}✅ Dependências instaladas${NC}"
+echo -e "${YELLOW}📦 Instalando Supabase (com dependências compatíveis)...${NC}"
+pip install supabase
+
+echo -e "${YELLOW}📦 Instalando dependências adicionais...${NC}"
+pip install asyncpg redis prometheus-client structlog tenacity python-multipart
+
+echo -e "${YELLOW}📦 Instalando python-jose...${NC}"
+pip install "python-jose[cryptography]"
+
+echo -e "${GREEN}✅ Todas as dependências instaladas${NC}"
+
+# Verificar se as dependências foram instaladas corretamente
+echo -e "${YELLOW}📦 Verificando instalação...${NC}"
+python -c "import fastapi, uvicorn, supabase, asyncpg; print('✅ Dependências principais OK')"
 
 # Criar arquivo .env se não existir
 if [ ! -f ".env" ]; then
@@ -117,7 +117,7 @@ echo -e "${YELLOW}📝 Criando script de teste...${NC}"
 cat > test_server.sh << 'EOF'
 #!/bin/bash
 echo "🧪 Testando servidor..."
-sleep 2
+sleep 3
 echo "1. Verificando se o servidor responde..."
 curl -f http://localhost:8001/health && echo " ✅ Health check OK" || echo " ❌ Health check falhou"
 
@@ -130,32 +130,31 @@ EOF
 
 chmod +x test_server.sh
 
-# Criar serviço systemd
-echo -e "${YELLOW}📝 Criando serviço systemd...${NC}"
-cat > supabase-mcp.service << EOF
-[Unit]
-Description=Supabase MCP Server
-After=network.target
-
-[Service]
-Type=simple
-User=$USER
-WorkingDirectory=$(pwd)
-ExecStart=$(pwd)/venv/bin/python -m supabase_mcp_server.main
-Restart=always
-RestartSec=3
-Environment=PATH=$(pwd)/venv/bin
-
-[Install]
-WantedBy=multi-user.target
+# Criar script de status
+echo -e "${YELLOW}📝 Criando script de status...${NC}"
+cat > status.sh << 'EOF'
+#!/bin/bash
+echo "📊 Status do Servidor MCP Supabase"
+echo "=================================="
+echo "🐍 Python: $(python --version)"
+echo "📦 Dependências instaladas:"
+pip list | grep -E "(fastapi|uvicorn|supabase|asyncpg)" || echo "❌ Dependências não encontradas"
+echo ""
+echo "🌐 Testando conectividade:"
+curl -s http://localhost:8001/health > /dev/null && echo "✅ Servidor respondendo" || echo "❌ Servidor não responde"
+echo ""
+echo "📁 Arquivos:"
+ls -la *.sh .env 2>/dev/null || echo "❌ Arquivos não encontrados"
 EOF
+
+chmod +x status.sh
 
 echo -e "${GREEN}✅ Instalação concluída!${NC}"
 echo ""
 echo -e "${BLUE}📋 Informações:${NC}"
 echo -e "${YELLOW}Python:${NC} $PYTHON_CMD ($PYTHON_VERSION)"
 echo -e "${YELLOW}Ambiente:${NC} venv (ambiente virtual Python)"
-echo -e "${YELLOW}Dependências:${NC} Apenas produção (sem ferramentas dev)"
+echo -e "${YELLOW}Método:${NC} Instalação inteligente (resolve conflitos automaticamente)"
 echo ""
 echo -e "${BLUE}📋 Para iniciar o servidor:${NC}"
 echo -e "   ${GREEN}./start_server.sh${NC}"
@@ -163,10 +162,7 @@ echo ""
 echo -e "${BLUE}📋 Para testar (em outro terminal):${NC}"
 echo -e "   ${GREEN}./test_server.sh${NC}"
 echo ""
-echo -e "${BLUE}📋 Para instalar como serviço:${NC}"
-echo -e "   ${GREEN}sudo cp supabase-mcp.service /etc/systemd/system/${NC}"
-echo -e "   ${GREEN}sudo systemctl daemon-reload${NC}"
-echo -e "   ${GREEN}sudo systemctl enable supabase-mcp.service${NC}"
-echo -e "   ${GREEN}sudo systemctl start supabase-mcp.service${NC}"
+echo -e "${BLUE}📋 Para ver status:${NC}"
+echo -e "   ${GREEN}./status.sh${NC}"
 echo ""
-echo -e "${GREEN}🎉 Servidor pronto para produção!${NC}"
+echo -e "${GREEN}🎉 Servidor pronto para uso!${NC}"

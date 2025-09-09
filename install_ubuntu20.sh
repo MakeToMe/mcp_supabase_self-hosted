@@ -46,7 +46,7 @@ if [[ "$UBUNTU_VERSION" == "20.04" ]]; then
     
     # Instalar Python 3.10 (mais compatível que 3.11 no Ubuntu 20.04)
     echo -e "${YELLOW}📦 Instalando Python 3.10...${NC}"
-    sudo apt install -y python3.10 python3.10-pip python3.10-venv python3.10-dev python3.10-distutils
+    sudo apt install -y python3.10 python3.10-venv python3.10-dev python3.10-distutils
     
     # Verificar instalação
     if command -v python3.10 &> /dev/null; then
@@ -55,8 +55,19 @@ if [[ "$UBUNTU_VERSION" == "20.04" ]]; then
     else
         # Fallback para Python 3.8 (nativo do Ubuntu 20.04)
         PYTHON_CMD="python3.8"
-        sudo apt install -y python3.8 python3.8-pip python3.8-venv python3.8-dev
+        sudo apt install -y python3.8 python3.8-venv python3.8-dev python3.8-distutils
         echo -e "${YELLOW}⚠️  Usando Python 3.8 (nativo do Ubuntu 20.04)${NC}"
+    fi
+    
+    # Instalar pip para a versão do Python escolhida
+    echo -e "${YELLOW}📦 Instalando pip para ${PYTHON_CMD}...${NC}"
+    curl -sS https://bootstrap.pypa.io/get-pip.py | sudo $PYTHON_CMD
+    
+    # Verificar se pip foi instalado
+    if ! $PYTHON_CMD -m pip --version &> /dev/null; then
+        echo -e "${YELLOW}💡 Tentando método alternativo para instalar pip...${NC}"
+        sudo apt install -y python3-pip
+        sudo $PYTHON_CMD -m ensurepip --upgrade
     fi
 else
     # Para outras versões do Ubuntu
@@ -64,9 +75,7 @@ else
     PYTHON_CMD="python3.11"
 fi
 
-# Instalar pip para a versão do Python escolhida
-echo -e "${YELLOW}📦 Configurando pip...${NC}"
-curl -sS https://bootstrap.pypa.io/get-pip.py | sudo $PYTHON_CMD
+# Pip já foi instalado na seção anterior
 
 # Instalar Poetry
 echo -e "${YELLOW}📦 Instalando Poetry...${NC}"

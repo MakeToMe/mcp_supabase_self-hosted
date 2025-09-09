@@ -71,8 +71,12 @@ if [[ "$UBUNTU_VERSION" == "20.04" ]]; then
     fi
 else
     # Para outras versões do Ubuntu
-    sudo apt install -y python3.11 python3.11-pip python3.11-venv python3.11-dev
+    sudo apt install -y python3.11 python3.11-venv python3.11-dev
     PYTHON_CMD="python3.11"
+    
+    # Instalar pip para Python 3.11
+    echo -e "${YELLOW}📦 Instalando pip para ${PYTHON_CMD}...${NC}"
+    curl -sS https://bootstrap.pypa.io/get-pip.py | sudo $PYTHON_CMD
 fi
 
 # Pip já foi instalado na seção anterior

@@ -8,223 +8,219 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 Instalando Supabase MCP Server...${NC}"
+echo -e "${BLUE}🚀 Instalação Definitiva - Supabase MCP Server${NC}"
 
 # Verificar se está rodando como root
 if [[ $EUID -eq 0 ]]; then
-   echo -e "${YELLOW}⚠️  Executando como root. Recomendamos usar um usuário não-root.${NC}"
-   echo -e "${YELLOW}⚠️  Continuando em 5 segundos... (Ctrl+C para cancelar)${NC}"
-   sleep 5
+   echo -e "${YELLOW}⚠️  Executando como root. Continuando em 3 segundos...${NC}"
+   sleep 3
 fi
 
-# Detectar sistema operacional
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    if [ -f /etc/debian_version ]; then
-        OS="debian"
-        echo -e "${GREEN}✅ Sistema detectado: Debian/Ubuntu${NC}"
-    elif [ -f /etc/redhat-release ]; then
-        OS="redhat"
-        echo -e "${GREEN}✅ Sistema detectado: RedHat/CentOS${NC}"
-    else
-        echo -e "${RED}❌ Sistema Linux não suportado${NC}"
-        exit 1
-    fi
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    OS="macos"
-    echo -e "${GREEN}✅ Sistema detectado: macOS${NC}"
+# Atualizar sistema
+echo -e "${YELLOW}📦 Atualizando sistema...${NC}"
+sudo apt update
+
+# Instalar dependências básicas
+echo -e "${YELLOW}📦 Instalando dependências básicas...${NC}"
+sudo apt install -y git curl nginx software-properties-common python3-pip python3-venv python3-dev build-essential
+
+# Detectar versão do Python disponível
+if command -v python3.10 &> /dev/null; then
+    PYTHON_CMD="python3.10"
+    echo -e "${GREEN}✅ Usando Python 3.10${NC}"
+elif command -v python3.8 &> /dev/null; then
+    PYTHON_CMD="python3.8"
+    echo -e "${GREEN}✅ Usando Python 3.8${NC}"
+elif command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+    echo -e "${GREEN}✅ Usando Python 3 padrão${NC}"
 else
-    echo -e "${RED}❌ Sistema operacional não suportado${NC}"
+    echo -e "${RED}❌ Python 3 não encontrado${NC}"
     exit 1
 fi
 
-# Função para instalar dependências no Ubuntu/Debian
-install_debian() {
-    echo -e "${YELLOW}📦 Atualizando sistema...${NC}"
-    sudo apt update && sudo apt upgrade -y
-    
-    echo -e "${YELLOW}📦 Instalando dependências básicas...${NC}"
-    sudo apt install -y git curl nginx software-properties-common python3-pip
-    
-    # Verificar versão do Ubuntu
-    UBUNTU_VERSION=$(lsb_release -rs)
-    echo -e "${BLUE}📋 Versão do Ubuntu detectada: ${UBUNTU_VERSION}${NC}"
-    
-    # Para Ubuntu 20.04, precisamos adicionar o repositório deadsnakes
-    if [[ "$UBUNTU_VERSION" == "20.04" ]]; then
-        echo -e "${YELLOW}📦 Adicionando repositório Python 3.11 para Ubuntu 20.04...${NC}"
-        sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo apt update
-    fi
-    
-    echo -e "${YELLOW}📦 Instalando Python 3.11...${NC}"
-    sudo apt install -y python3.11 python3.11-venv python3.11-dev python3.11-distutils
-    
-    # Verificar se python3.11 foi instalado corretamente
-    if ! command -v python3.11 &> /dev/null; then
-        echo -e "${RED}❌ Falha ao instalar Python 3.11${NC}"
-        echo -e "${YELLOW}💡 Tentando instalar Python 3.10 como alternativa...${NC}"
-        sudo apt install -y python3.10 python3.10-venv python3.10-dev python3.10-distutils
-        PYTHON_VERSION="python3.10"
-    else
-        echo -e "${GREEN}✅ Python 3.11 instalado com sucesso${NC}"
-        PYTHON_VERSION="python3.11"
-    fi
-    
-    # Instalar pip para a versão do Python (deadsnakes não inclui pip)
-    echo -e "${YELLOW}📦 Instalando pip para ${PYTHON_VERSION}...${NC}"
-    curl -sS https://bootstrap.pypa.io/get-pip.py | sudo $PYTHON_VERSION
-    
-    # Verificar se pip foi instalado
-    if ! $PYTHON_VERSION -m pip --version &> /dev/null; then
-        echo -e "${YELLOW}💡 Tentando método alternativo para instalar pip...${NC}"
-        sudo apt install -y python3-pip
-        sudo $PYTHON_VERSION -m ensurepip --upgrade
-    fi
-}
+# Verificar versão do Python
+PYTHON_VERSION=$($PYTHON_CMD --version 2>&1 | cut -d' ' -f2)
+echo -e "${BLUE}📋 Versão do Python: ${PYTHON_VERSION}${NC}"
 
-# Função para instalar dependências no RedHat/CentOS
-install_redhat() {
-    echo -e "${YELLOW}📦 Atualizando sistema...${NC}"
-    sudo yum update -y
-    
-    echo -e "${YELLOW}📦 Instalando dependências...${NC}"
-    sudo yum install -y python3.11 python3.11-pip git curl nginx
-}
-
-# Função para instalar dependências no macOS
-install_macos() {
-    echo -e "${YELLOW}📦 Verificando Homebrew...${NC}"
-    if ! command -v brew &> /dev/null; then
-        echo -e "${YELLOW}📦 Instalando Homebrew...${NC}"
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
-    
-    echo -e "${YELLOW}📦 Instalando dependências...${NC}"
-    brew install python@3.11 git curl nginx
-}
-
-# Instalar dependências baseado no OS
-case $OS in
-    "debian")
-        install_debian
-        ;;
-    "redhat")
-        install_redhat
-        ;;
-    "macos")
-        install_macos
-        ;;
-esac
-
-# Instalar Poetry
-echo -e "${YELLOW}📦 Instalando Poetry...${NC}"
-if ! command -v poetry &> /dev/null; then
-    # Usar a versão do Python que foi instalada
-    if command -v python3.11 &> /dev/null; then
-        curl -sSL https://install.python-poetry.org | python3.11 -
-        PYTHON_VERSION="python3.11"
-    elif command -v python3.10 &> /dev/null; then
-        curl -sSL https://install.python-poetry.org | python3.10 -
-        PYTHON_VERSION="python3.10"
-    else
-        curl -sSL https://install.python-poetry.org | python3 -
-        PYTHON_VERSION="python3"
-    fi
-    
-    # Adicionar Poetry ao PATH
-    export PATH="$HOME/.local/bin:$PATH"
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-    
-    # Para zsh users
-    if [ -f ~/.zshrc ]; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-    fi
-    
-    echo -e "${GREEN}✅ Poetry instalado usando ${PYTHON_VERSION}${NC}"
-else
-    echo -e "${GREEN}✅ Poetry já está instalado${NC}"
-fi
-
-# Clonar o repositório se não estivermos nele
+# Clonar o repositório se necessário
 if [ ! -f "pyproject.toml" ]; then
-    echo -e "${YELLOW}📦 Clonando repositório do projeto...${NC}"
+    echo -e "${YELLOW}📦 Clonando repositório...${NC}"
     git clone https://github.com/MakeToMe/mcp_supabase_self-hosted.git
     cd mcp_supabase_self-hosted
 fi
 
-# Verificar se Poetry está no PATH
-if ! command -v poetry &> /dev/null; then
-    export PATH="$HOME/.local/bin:$PATH"
-fi
+# Criar ambiente virtual
+echo -e "${YELLOW}📦 Criando ambiente virtual...${NC}"
+$PYTHON_CMD -m venv venv
+source venv/bin/activate
 
-# Configurar Poetry para usar a versão correta do Python
-echo -e "${YELLOW}📦 Configurando Poetry...${NC}"
-if command -v python3.11 &> /dev/null; then
-    $HOME/.local/bin/poetry env use python3.11
-elif command -v python3.10 &> /dev/null; then
-    $HOME/.local/bin/poetry env use python3.10
-else
-    $HOME/.local/bin/poetry env use python3
-fi
+# Atualizar pip no ambiente virtual
+echo -e "${YELLOW}📦 Atualizando pip...${NC}"
+pip install --upgrade pip
 
-# Instalar dependências do projeto
-echo -e "${YELLOW}📦 Instalando dependências do projeto...${NC}"
-$HOME/.local/bin/poetry install
+# Instalar dependências em ordem inteligente
+echo -e "${YELLOW}📦 Instalando dependências principais...${NC}"
+pip install fastapi uvicorn pydantic pydantic-settings
+
+echo -e "${YELLOW}📦 Instalando Supabase (com dependências compatíveis)...${NC}"
+pip install supabase
+
+echo -e "${YELLOW}📦 Instalando dependências adicionais...${NC}"
+pip install asyncpg redis prometheus-client structlog tenacity python-multipart
+
+echo -e "${YELLOW}📦 Instalando python-jose...${NC}"
+pip install "python-jose[cryptography]"
+
+echo -e "${GREEN}✅ Todas as dependências instaladas${NC}"
+
+# Instalar o projeto em modo desenvolvimento
+echo -e "${YELLOW}📦 Instalando o projeto supabase_mcp_server...${NC}"
+pip install -e .
+
+# Verificar se tudo foi instalado corretamente
+echo -e "${YELLOW}📦 Verificando instalação...${NC}"
+python -c "import fastapi, uvicorn, supabase, asyncpg; print('✅ Dependências principais OK')"
+python -c "import supabase_mcp_server; print('✅ Projeto supabase_mcp_server OK')"
 
 # Criar arquivo .env se não existir
 if [ ! -f ".env" ]; then
     echo -e "${YELLOW}📝 Criando arquivo .env...${NC}"
-    cp .env.example .env
-    echo -e "${BLUE}📝 Configure o arquivo .env com suas credenciais Supabase${NC}"
+    cat > .env << 'EOF'
+# Supabase Configuration
+SUPABASE_URL=https://studio.rardevops.com
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0ODM2NDAwLAogICJleHAiOiAxODkyNjAyODAwCn0.a1mpboOHE9IMJbhsGquPv72W0iaDnM3kHYRKaZ2t3kA
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogInNlcnZpY2Vfcm9sZSIsCiAgImlzcyI6ICJzdXBhYmFzZSIsCiAgImlhdCI6IDE3MzQ4MzY0MDAsCiAgImV4cCI6IDE4OTI2MDI4MDAKfQ.VmlSWOEpE77ZfOcQSjoP-1Ty4eWUgybz_K9AUvdsY70
+
+# Database Configuration
+DATABASE_URL=postgresql://postgres:Aha517_Rar-PGRS_U2a59w@studio.rardevops.com:4202/postgres
+
+# Server Configuration
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8001
+LOG_LEVEL=INFO
+
+# Security Configuration
+MCP_API_KEY=mcp-test-key-2024-rardevops
+EOF
+    echo -e "${BLUE}📝 Arquivo .env criado${NC}"
 fi
 
-# Criar script de inicialização
+# Criar script de inicialização robusto
 echo -e "${YELLOW}📝 Criando script de inicialização...${NC}"
 cat > start_server.sh << 'EOF'
 #!/bin/bash
-export PATH="$HOME/.local/bin:$PATH"
 cd "$(dirname "$0")"
-poetry run python -m supabase_mcp_server.main
+source venv/bin/activate
+
+# Verificar se o módulo existe
+if ! python -c "import supabase_mcp_server" 2>/dev/null; then
+    echo "❌ Módulo supabase_mcp_server não encontrado. Instalando..."
+    pip install -e .
+fi
+
+# Adicionar src ao PYTHONPATH como backup
+export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
+
+echo "🚀 Iniciando servidor MCP Supabase..."
+echo "📡 Servidor será acessível em: http://0.0.0.0:8001"
+echo "🔑 API Key: mcp-test-key-2024-rardevops"
+echo "⏹️  Para parar: Ctrl+C"
+echo ""
+
+python -m supabase_mcp_server.main
 EOF
 
 chmod +x start_server.sh
 
-# Criar arquivo de serviço systemd (opcional)
-echo -e "${YELLOW}📝 Criando arquivo de serviço systemd...${NC}"
-cat > supabase-mcp.service << EOF
-[Unit]
-Description=Supabase MCP Server
-After=network.target
+# Criar script de teste
+echo -e "${YELLOW}📝 Criando script de teste...${NC}"
+cat > test_server.sh << 'EOF'
+#!/bin/bash
+echo "🧪 Testando servidor MCP Supabase..."
+echo "=================================="
+sleep 2
 
-[Service]
-Type=simple
-User=$USER
-WorkingDirectory=$(pwd)
-Environment=PATH=$HOME/.local/bin
-ExecStart=$HOME/.local/bin/poetry run python -m supabase_mcp_server.main
-Restart=always
-RestartSec=3
+echo "1. 🏥 Health Check..."
+if curl -f -s http://localhost:8001/health > /dev/null; then
+    echo "   ✅ Servidor respondendo"
+else
+    echo "   ❌ Servidor não responde"
+    exit 1
+fi
 
-[Install]
-WantedBy=multi-user.target
+echo "2. 🔐 Testando autenticação..."
+if curl -f -s -H "Authorization: Bearer mcp-test-key-2024-rardevops" \
+     http://localhost:8001/mcp/tools > /dev/null; then
+    echo "   ✅ Autenticação OK"
+else
+    echo "   ❌ Falha na autenticação"
+fi
+
+echo "3. 🛠️  Listando ferramentas disponíveis..."
+curl -s -H "Authorization: Bearer mcp-test-key-2024-rardevops" \
+     http://localhost:8001/mcp/tools | python -m json.tool 2>/dev/null || echo "   ❌ Erro ao listar ferramentas"
+
+echo ""
+echo "✅ Teste concluído!"
 EOF
 
-echo -e "${GREEN}✅ Instalação concluída!${NC}"
+chmod +x test_server.sh
+
+# Criar script de status
+echo -e "${YELLOW}📝 Criando script de status...${NC}"
+cat > status.sh << 'EOF'
+#!/bin/bash
+echo "📊 Status do Servidor MCP Supabase"
+echo "=================================="
+echo "🐍 Python: $(source venv/bin/activate && python --version)"
+echo "📦 Ambiente: venv ativo"
 echo ""
-echo -e "${BLUE}📋 Próximos passos:${NC}"
-echo -e "${YELLOW}1.${NC} Configure o arquivo .env com suas credenciais:"
-echo -e "   ${BLUE}nano .env${NC}"
+echo "🔧 Dependências principais:"
+source venv/bin/activate
+python -c "
+try:
+    import supabase_mcp_server
+    print('   ✅ supabase_mcp_server')
+except ImportError:
+    print('   ❌ supabase_mcp_server')
+
+try:
+    import fastapi, uvicorn, supabase
+    print('   ✅ fastapi, uvicorn, supabase')
+except ImportError:
+    print('   ❌ fastapi, uvicorn, supabase')
+"
 echo ""
-echo -e "${YELLOW}2.${NC} Inicie o servidor:"
-echo -e "   ${BLUE}./start_server.sh${NC}"
+echo "🌐 Conectividade:"
+if curl -s http://localhost:8001/health > /dev/null; then
+    echo "   ✅ Servidor respondendo em http://localhost:8001"
+else
+    echo "   ❌ Servidor não responde"
+fi
 echo ""
-echo -e "${YELLOW}3.${NC} Para instalar como serviço systemd (opcional):"
-echo -e "   ${BLUE}sudo cp supabase-mcp.service /etc/systemd/system/${NC}"
-echo -e "   ${BLUE}sudo systemctl daemon-reload${NC}"
-echo -e "   ${BLUE}sudo systemctl enable supabase-mcp.service${NC}"
-echo -e "   ${BLUE}sudo systemctl start supabase-mcp.service${NC}"
+echo "📁 Arquivos de configuração:"
+[ -f .env ] && echo "   ✅ .env" || echo "   ❌ .env"
+[ -f start_server.sh ] && echo "   ✅ start_server.sh" || echo "   ❌ start_server.sh"
+[ -f test_server.sh ] && echo "   ✅ test_server.sh" || echo "   ❌ test_server.sh"
+EOF
+
+chmod +x status.sh
+
+echo -e "${GREEN}✅ Instalação concluída com sucesso!${NC}"
 echo ""
-echo -e "${YELLOW}4.${NC} Teste a instalação:"
-echo -e "   ${BLUE}curl http://localhost:8001/health${NC}"
+echo -e "${BLUE}📋 Informações:${NC}"
+echo -e "${YELLOW}Python:${NC} $PYTHON_CMD ($PYTHON_VERSION)"
+echo -e "${YELLOW}Ambiente:${NC} venv (ambiente virtual Python)"
+echo -e "${YELLOW}Projeto:${NC} Instalado em modo desenvolvimento"
+echo ""
+echo -e "${BLUE}📋 Comandos disponíveis:${NC}"
+echo -e "   ${GREEN}./start_server.sh${NC}  - Iniciar servidor"
+echo -e "   ${GREEN}./test_server.sh${NC}   - Testar servidor"
+echo -e "   ${GREEN}./status.sh${NC}        - Ver status"
+echo ""
+echo -e "${BLUE}📡 Acesso externo:${NC}"
+echo -e "   ${GREEN}http://SEU_IP:8001/health${NC}"
+echo -e "   ${GREEN}http://SEU_IP:8001/mcp/tools${NC}"
 echo ""
 echo -e "${GREEN}🎉 Servidor MCP Supabase pronto para uso!${NC}"

@@ -74,9 +74,14 @@ pip install "python-jose[cryptography]"
 
 echo -e "${GREEN}✅ Todas as dependências instaladas${NC}"
 
+# Instalar o projeto em modo desenvolvimento
+echo -e "${YELLOW}📦 Instalando o projeto supabase_mcp_server...${NC}"
+pip install -e .
+
 # Verificar se as dependências foram instaladas corretamente
 echo -e "${YELLOW}📦 Verificando instalação...${NC}"
 python -c "import fastapi, uvicorn, supabase, asyncpg; print('✅ Dependências principais OK')"
+python -c "import supabase_mcp_server; print('✅ Projeto supabase_mcp_server OK')"
 
 # Criar arquivo .env se não existir
 if [ ! -f ".env" ]; then
@@ -107,6 +112,17 @@ cat > start_server.sh << 'EOF'
 #!/bin/bash
 cd "$(dirname "$0")"
 source venv/bin/activate
+
+# Verificar se o módulo existe
+if ! python -c "import supabase_mcp_server" 2>/dev/null; then
+    echo "❌ Módulo supabase_mcp_server não encontrado. Instalando..."
+    pip install -e .
+fi
+
+# Adicionar src ao PYTHONPATH como backup
+export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
+
+echo "🚀 Iniciando servidor MCP Supabase..."
 python -m supabase_mcp_server.main
 EOF
 

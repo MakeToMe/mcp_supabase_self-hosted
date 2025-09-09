@@ -2,7 +2,7 @@
 
 import asyncio
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
 from urllib.parse import urlparse
 
 import asyncpg
@@ -202,7 +202,7 @@ class DatabaseService:
     
     async def execute_transaction(
         self,
-        queries: List[tuple[str, Optional[List[Any]]]]
+        queries: List[Tuple[str, Optional[List[Any]]]]
     ) -> List[QueryResult]:
         """Execute multiple queries in a transaction."""
         if not self._pool:

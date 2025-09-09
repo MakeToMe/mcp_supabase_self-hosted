@@ -12,8 +12,9 @@ echo -e "${BLUE}🚀 Instalando Supabase MCP Server...${NC}"
 
 # Verificar se está rodando como root
 if [[ $EUID -eq 0 ]]; then
-   echo -e "${RED}❌ Este script não deve ser executado como root${NC}"
-   exit 1
+   echo -e "${YELLOW}⚠️  Executando como root. Recomendamos usar um usuário não-root.${NC}"
+   echo -e "${YELLOW}⚠️  Continuando em 5 segundos... (Ctrl+C para cancelar)${NC}"
+   sleep 5
 fi
 
 # Detectar sistema operacional

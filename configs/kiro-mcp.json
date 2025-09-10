@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "supabase-self-hosted": {
+      "command": "node",
+      "args": [
+        "-e",
+        "const http = require('http'); const url = process.env.MCP_SERVER_URL; const apiKey = process.env.MCP_API_KEY; const makeRequest = (path, method = 'GET', data = null) => { return new Promise((resolve, reject) => { const options = { hostname: url.replace(/^https?:\\/\\//, '').split(':')[0], port: url.includes(':') ? url.split(':')[2] || 80 : 80, path: path, method: method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` } }; const req = http.request(options, (res) => { let body = ''; res.on('data', (chunk) => body += chunk); res.on('end', () => { try { resolve(JSON.parse(body)); } catch (e) { resolve(body); } }); }); req.on('error', reject); if (data) req.write(JSON.stringify(data)); req.end(); }); }; const handleMCP = async (request) => { try { switch (request.method) { case 'tools/list': return await makeRequest('/mcp/tools'); case 'tools/call': return await makeRequest('/mcp/execute', 'POST', { tool: request.params.name, parameters: request.params.arguments }); default: return { error: 'Unknown method' }; } } catch (error) { return { error: error.message }; } }; process.stdin.on('data', async (data) => { try { const request = JSON.parse(data.toString()); const response = await handleMCP(request); console.log(JSON.stringify(response)); } catch (error) { console.log(JSON.stringify({ error: error.message })); } });"
+      ],
+      "env": {
+        "MCP_SERVER_URL": "http://170.205.37.204:8001",
+        "MCP_API_KEY": "mcp-test-key-2024-rardevops"
+      }
+    }
+  }
+}

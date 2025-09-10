@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "supabase-self-hosted": {
+      "command": "python3",
+      "args": ["configs/mcp_client.py"],
+      "env": {
+        "MCP_SERVER_URL": "http://SEU_IP_DA_VM:8001",
+        "MCP_API_KEY": "mcp-test-key-2024-rardevops"
+      }
+    }
+  }
+}

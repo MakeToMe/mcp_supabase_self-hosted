@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "supabase-self-hosted": {
+      "command": "python3",
+      "args": [
+        "-c",
+        "import json, sys, urllib.request, urllib.parse; server_url = 'http://170.205.37.204:8001'; api_key = 'mcp-test-key-2024-rardevops'; def make_request(path, method='GET', data=None): req = urllib.request.Request(f'{server_url}{path}', headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}); req.get_method = lambda: method; if data: req.data = json.dumps(data).encode(); try: with urllib.request.urlopen(req) as response: return json.loads(response.read().decode()); except Exception as e: return {'error': str(e)}; def handle_mcp(request): method = request.get('method', ''); if method == 'tools/list': return make_request('/mcp/tools'); elif method == 'tools/call': return make_request('/mcp/execute', 'POST', {'tool': request['params']['name'], 'parameters': request['params'].get('arguments', {})}); else: return {'error': 'Unknown method'}; for line in sys.stdin: try: request = json.loads(line.strip()); response = handle_mcp(request); print(json.dumps(response)); except Exception as e: print(json.dumps({'error': str(e)}));"
+      ],
+      "env": {
+        "PYTHONPATH": ".",
+        "MCP_SERVER_URL": "http://170.205.37.204:8001",
+        "MCP_API_KEY": "mcp-test-key-2024-rardevops"
+      }
+    }
+  }
+}

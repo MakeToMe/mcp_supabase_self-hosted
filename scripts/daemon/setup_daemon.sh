@@ -6,6 +6,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SERVICE_NAME="mcp-supabase"
 
 echo "🚀 Configurando Supabase MCP Server como daemon..."
@@ -32,7 +33,7 @@ setup_systemd() {
     echo "📋 Configurando serviço systemd..."
     
     # Atualiza o arquivo de serviço com o caminho correto
-    sed "s|/opt/mcp-supabase|$SCRIPT_DIR|g" "$SCRIPT_DIR/systemd/mcp-supabase.service" > /tmp/mcp-supabase.service
+    sed "s|/opt/mcp-supabase|$PROJECT_ROOT|g" "$PROJECT_ROOT/systemd/mcp-supabase.service" > /tmp/mcp-supabase.service
     
     # Copia o arquivo de serviço
     sudo cp /tmp/mcp-supabase.service /etc/systemd/system/
@@ -66,7 +67,7 @@ setup_launchd() {
     <string>com.supabase.mcp</string>
     <key>ProgramArguments</key>
     <array>
-        <string>$SCRIPT_DIR/venv/bin/python</string>
+        <string>$PROJECT_ROOT/venv/bin/python</string>
         <string>-m</string>
         <string>supabase_mcp_server</string>
         <string>--host</string>
@@ -75,20 +76,20 @@ setup_launchd() {
         <string>8001</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>$SCRIPT_DIR</string>
+    <string>$PROJECT_ROOT</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>$SCRIPT_DIR/venv/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <string>$PROJECT_ROOT/venv/bin:/usr/local/bin:/usr/bin:/bin</string>
     </dict>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>$SCRIPT_DIR/mcp_server.log</string>
+    <string>$PROJECT_ROOT/mcp_server.log</string>
     <key>StandardErrorPath</key>
-    <string>$SCRIPT_DIR/mcp_server_error.log</string>
+    <string>$PROJECT_ROOT/mcp_server_error.log</string>
 </dict>
 </plist>
 EOF
@@ -117,7 +118,7 @@ setup_daemon_scripts() {
 
 # Verifica se o ambiente virtual existe
 check_venv() {
-    if [ ! -d "$SCRIPT_DIR/venv" ]; then
+    if [ ! -d "$PROJECT_ROOT/venv" ]; then
         echo "❌ Ambiente virtual não encontrado!"
         echo "   Execute primeiro: python -m venv venv && source venv/bin/activate && pip install -e ."
         exit 1
@@ -126,10 +127,10 @@ check_venv() {
 
 # Verifica se o arquivo .env existe
 check_env() {
-    if [ ! -f "$SCRIPT_DIR/.env" ]; then
+    if [ ! -f "$PROJECT_ROOT/.env" ]; then
         echo "⚠️  Arquivo .env não encontrado!"
         echo "   Copie .env.example para .env e configure suas variáveis"
-        cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
+        cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
         echo "   Arquivo .env criado a partir do exemplo"
     fi
 }

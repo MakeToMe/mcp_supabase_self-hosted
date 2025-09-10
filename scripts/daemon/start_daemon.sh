@@ -4,14 +4,15 @@
 # Uso: ./start_daemon.sh [start|stop|restart|status]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VENV_PATH="$SCRIPT_DIR/venv"
-PID_FILE="$SCRIPT_DIR/mcp_server.pid"
-LOG_FILE="$SCRIPT_DIR/mcp_server.log"
-ERROR_LOG="$SCRIPT_DIR/mcp_server_error.log"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+VENV_PATH="$PROJECT_ROOT/venv"
+PID_FILE="$PROJECT_ROOT/mcp_server.pid"
+LOG_FILE="$PROJECT_ROOT/mcp_server.log"
+ERROR_LOG="$PROJECT_ROOT/mcp_server_error.log"
 
 # Carrega variáveis de ambiente
-if [ -f "$SCRIPT_DIR/.env" ]; then
-    source "$SCRIPT_DIR/.env"
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    source "$PROJECT_ROOT/.env"
 fi
 
 start_server() {
@@ -27,6 +28,18 @@ start_server() {
     fi
 
     echo "Iniciando servidor MCP Supabase em segundo plano..."
+    echo "Projeto: $PROJECT_ROOT"
+    echo "Venv: $VENV_PATH"
+    
+    # Verifica se o ambiente virtual existe
+    if [ ! -f "$VENV_PATH/bin/activate" ]; then
+        echo "❌ Ambiente virtual não encontrado em: $VENV_PATH"
+        echo "   Execute: python -m venv venv && source venv/bin/activate && pip install -e ."
+        return 1
+    fi
+    
+    # Muda para o diretório do projeto
+    cd "$PROJECT_ROOT"
     
     # Ativa o ambiente virtual
     source "$VENV_PATH/bin/activate"

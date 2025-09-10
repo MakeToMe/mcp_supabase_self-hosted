@@ -46,8 +46,6 @@ start_server() {
     
     # Inicia o servidor em background
     nohup python -m supabase_mcp_server \
-        --host 0.0.0.0 \
-        --port 8001 \
         > "$LOG_FILE" 2> "$ERROR_LOG" &
     
     SERVER_PID=$!

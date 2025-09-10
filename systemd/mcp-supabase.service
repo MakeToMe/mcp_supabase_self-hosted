@@ -1,0 +1,30 @@
+[Unit]
+Description=Supabase MCP Server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/mcp-supabase
+Environment=PATH=/opt/mcp-supabase/venv/bin
+EnvironmentFile=/opt/mcp-supabase/.env
+ExecStart=/opt/mcp-supabase/venv/bin/python -m supabase_mcp_server --host 0.0.0.0 --port 8001
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mcp-supabase
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/mcp-supabase
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

@@ -64,15 +64,33 @@ SERVER_PORT=8001
 ```
 
 ### 4. Iniciar Servidor
-```bash
-# Modo desenvolvimento
-./start_server.sh
 
-# Modo produção (systemd)
-sudo cp supabase-mcp.service /etc/systemd/system/
+#### Desenvolvimento (Primeiro Plano)
+```bash
+# Ativar ambiente virtual
+source venv/bin/activate
+
+# Iniciar servidor
+python -m supabase_mcp_server --host 0.0.0.0 --port 8001
+```
+
+#### Produção (Segundo Plano)
+```bash
+# Scripts daemon multiplataforma
+chmod +x scripts/daemon/start_daemon.sh
+./scripts/daemon/start_daemon.sh start
+
+# Windows
+scripts\daemon\start_daemon.bat start
+
+# Docker (recomendado)
+docker-compose -f docker-daemon.yml up -d
+
+# Systemd (Linux)
+sudo cp systemd/mcp-supabase.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable supabase-mcp.service
-sudo systemctl start supabase-mcp.service
+sudo systemctl enable mcp-supabase
+sudo systemctl start mcp-supabase
 ```
 
 ### 5. Configurações para IAs
@@ -116,6 +134,42 @@ curl -X POST \
 - **`crud_operations`**: Operações CRUD via API Supabase
 - **`storage_operations`**: Gerenciar arquivos no Supabase Storage
 - **`get_metrics`**: Obter métricas de performance
+
+## 🔄 Execução em Background
+
+### Scripts Daemon
+Execução multiplataforma em segundo plano:
+```bash
+# Iniciar
+./scripts/daemon/start_daemon.sh start
+
+# Status
+./scripts/daemon/start_daemon.sh status
+
+# Parar
+./scripts/daemon/start_daemon.sh stop
+```
+
+### Docker (Recomendado)
+```bash
+# Iniciar em background
+docker-compose -f docker-daemon.yml up -d
+
+# Ver logs
+docker-compose -f docker-daemon.yml logs -f
+
+# Parar
+docker-compose -f docker-daemon.yml down
+```
+
+### Systemd (Linux)
+```bash
+# Configurar serviço
+sudo cp systemd/mcp-supabase.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable mcp-supabase
+sudo systemctl start mcp-supabase
+```
 
 ## 🔧 Configuração Avançada
 
@@ -179,9 +233,16 @@ curl http://seu-servidor:9090/metrics
 
 ```
 ├── src/supabase_mcp_server/    # Código fonte
+├── scripts/
+│   ├── daemon/                 # Scripts para execução em background
+│   │   ├── start_daemon.sh     # Linux/macOS daemon
+│   │   ├── start_daemon.bat    # Windows daemon
+│   │   └── setup_daemon.sh     # Configuração automática
+│   └── ...                     # Outros scripts
+├── systemd/                    # Arquivos de serviço systemd
 ├── configs/                    # Configurações para IAs
+├── docker-daemon.yml           # Docker Compose para produção
 ├── install.sh                  # Script de instalação
-├── start_server.sh            # Script de inicialização
 ├── DEPLOY_GUIDE.md            # Guia completo de deploy
 └── README.md                  # Este arquivo
 ```

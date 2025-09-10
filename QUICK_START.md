@@ -34,15 +34,46 @@ MCP_API_KEY=mcp-test-key-2024-rardevops
 ```
 
 ### 4. 🚀 Iniciar Servidor
-```bash
-# Desenvolvimento
-./start_server.sh
 
-# Produção (recomendado)
-sudo cp supabase-mcp.service /etc/systemd/system/
+#### Opção A: Desenvolvimento (Primeiro Plano)
+```bash
+# Ativar ambiente virtual
+source venv/bin/activate
+
+# Iniciar servidor
+python -m supabase_mcp_server --host 0.0.0.0 --port 8001
+```
+
+#### Opção B: Daemon Scripts (Segundo Plano)
+```bash
+# Linux/macOS
+chmod +x scripts/daemon/start_daemon.sh
+./scripts/daemon/start_daemon.sh start
+
+# Windows
+scripts\daemon\start_daemon.bat start
+
+# Verificar status
+./scripts/daemon/start_daemon.sh status  # Linux/macOS
+scripts\daemon\start_daemon.bat status   # Windows
+```
+
+#### Opção C: Docker (Recomendado)
+```bash
+# Iniciar em background
+docker-compose -f docker-daemon.yml up -d
+
+# Ver logs
+docker-compose -f docker-daemon.yml logs -f
+```
+
+#### Opção D: Systemd (Produção Linux)
+```bash
+# Instalar serviço
+sudo cp systemd/mcp-supabase.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable supabase-mcp.service
-sudo systemctl start supabase-mcp.service
+sudo systemctl enable mcp-supabase
+sudo systemctl start mcp-supabase
 ```
 
 ### 5. 🤖 Configurar IA

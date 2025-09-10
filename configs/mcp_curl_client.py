@@ -1,88 +1,104 @@
 #!/usr/bin/env python3
 """
-MCP Client for Supabase Self-Hosted Server
-Implements JSON-RPC 2.0 protocol for MCP communication
+Simple MCP Client using curl for HTTP requests
+More reliable than urllib for network requests
 """
 
 import json
 import sys
-import urllib.request
-import urllib.parse
+import subprocess
 import os
 import logging
-from typing import Dict, Any, Optional
 
-# Configure logging to stderr to avoid interfering with JSON-RPC
-logging.basicConfig(
-    level=logging.ERROR,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    stream=sys.stderr
-)
+# Configure logging
+logging.basicConfig(level=logging.ERROR, stream=sys.stderr)
 logger = logging.getLogger(__name__)
 
-class SupabaseMCPClient:
+class CurlMCPClient:
     def __init__(self):
         self.server_url = os.getenv('MCP_SERVER_URL', 'http://localhost:8001')
         self.api_key = os.getenv('MCP_API_KEY', 'mcp-test-key-2024-rardevops')
-        self.headers = {
-            'Authorization': f'Bearer {self.api_key}',
-            'Content-Type': 'application/json',
-            'User-Agent': 'Kiro-MCP-Client/1.0'
-        }
-        logger.info(f"Initialized MCP client for {self.server_url}")
     
-    def make_request(self, path: str, method: str = 'GET', data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Make HTTP request to MCP server."""
+    def curl_request(self, path: str, method: str = 'GET', data: dict = None) -> dict:
+        """Make HTTP request using curl."""
         try:
             url = f"{self.server_url.rstrip('/')}{path}"
-            req = urllib.request.Request(url, headers=self.headers)
-            req.get_method = lambda: method
+            cmd = [
+                'curl', '-s', '-X', method,
+                '-H', f'Authorization: Bearer {self.api_key}',
+                '-H', 'Content-Type: application/json',
+                '--connect-timeout', '10',
+                '--max-time', '30'
+            ]
             
             if data:
-                req.data = json.dumps(data).encode('utf-8')
+                cmd.extend(['-d', json.dumps(data)])
             
-            with urllib.request.urlopen(req, timeout=30) as response:
-                response_data = response.read().decode('utf-8')
-                return json.loads(response_data)
+            cmd.append(url)
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=35)
+            
+            if result.returncode != 0:
+                return {
+                    'error': {
+                        'code': -32603,
+                        'message': f'Curl error: {result.stderr}'
+                    }
+                }
+            
+            try:
+                return json.loads(result.stdout)
+            except json.JSONDecodeError:
+                return {
+                    'error': {
+                        'code': -32603,
+                        'message': f'Invalid JSON response: {result.stdout[:200]}'
+                    }
+                }
                 
-        except Exception as e:
-            logger.error(f"Request failed: {e}")
+        except subprocess.TimeoutExpired:
             return {
                 'error': {
                     'code': -32603,
-                    'message': f'Internal error: {str(e)}'
+                    'message': 'Request timeout'
+                }
+            }
+        except Exception as e:
+            return {
+                'error': {
+                    'code': -32603,
+                    'message': f'Request failed: {str(e)}'
                 }
             }
     
-    def handle_initialize(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle initialize request."""
+    def handle_initialize(self, params: dict) -> dict:
+        """Handle MCP initialize."""
         return {
             'protocolVersion': '2024-11-05',
             'capabilities': {
                 'tools': {}
             },
             'serverInfo': {
-                'name': 'supabase-mcp-client',
+                'name': 'supabase-mcp-curl-client',
                 'version': '1.0.0'
             }
         }
     
-    def handle_tools_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle tools/list request."""
-        response = self.make_request('/mcp/tools')
+    def handle_tools_list(self, params: dict) -> dict:
+        """Handle tools/list."""
+        response = self.curl_request('/mcp/tools')
         if 'error' in response:
             return response
         
-        # Convert HTTP response to MCP format
         tools = response if isinstance(response, list) else []
         return {'tools': tools}
     
-    def handle_tools_call(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle tools/call request."""
+    def handle_tools_call(self, params: dict) -> dict:
+        """Handle tools/call."""
         name = params.get('name', '')
         arguments = params.get('arguments', {})
         
-        response = self.make_request('/mcp/execute', 'POST', {
+        response = self.curl_request('/mcp/execute', 'POST', {
             'tool': name,
             'parameters': arguments
         })
@@ -90,7 +106,6 @@ class SupabaseMCPClient:
         if 'error' in response:
             return response
         
-        # Convert HTTP response to MCP format
         return {
             'content': [
                 {
@@ -100,8 +115,8 @@ class SupabaseMCPClient:
             ]
         }
     
-    def handle_jsonrpc_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle JSON-RPC 2.0 request."""
+    def handle_request(self, request: dict) -> dict:
+        """Handle JSON-RPC request."""
         method = request.get('method', '')
         params = request.get('params', {})
         request_id = request.get('id')
@@ -130,20 +145,18 @@ class SupabaseMCPClient:
             }
             
         except Exception as e:
-            logger.error(f"Error handling request: {e}")
+            logger.error(f"Error: {e}")
             return {
                 'jsonrpc': '2.0',
                 'id': request_id,
                 'error': {
                     'code': -32603,
-                    'message': f'Internal error: {str(e)}'
+                    'message': str(e)
                 }
             }
     
     def run(self):
-        """Main loop to handle MCP requests via JSON-RPC 2.0."""
-        logger.info("Starting MCP client...")
-        
+        """Main loop."""
         try:
             for line in sys.stdin:
                 line = line.strip()
@@ -152,13 +165,9 @@ class SupabaseMCPClient:
                 
                 try:
                     request = json.loads(line)
-                    logger.info(f"Received request: {request.get('method', 'unknown')}")
-                    
-                    response = self.handle_jsonrpc_request(request)
+                    response = self.handle_request(request)
                     print(json.dumps(response), flush=True)
-                    
-                except json.JSONDecodeError as e:
-                    logger.error(f"Invalid JSON: {e}")
+                except json.JSONDecodeError:
                     error_response = {
                         'jsonrpc': '2.0',
                         'id': None,
@@ -168,24 +177,9 @@ class SupabaseMCPClient:
                         }
                     }
                     print(json.dumps(error_response), flush=True)
-                    
-                except Exception as e:
-                    logger.error(f"Unexpected error: {e}")
-                    error_response = {
-                        'jsonrpc': '2.0',
-                        'id': None,
-                        'error': {
-                            'code': -32603,
-                            'message': f'Internal error: {str(e)}'
-                        }
-                    }
-                    print(json.dumps(error_response), flush=True)
-                    
         except KeyboardInterrupt:
-            logger.info("Client stopped by user")
-        except Exception as e:
-            logger.error(f"Fatal error: {e}")
+            pass
 
 if __name__ == '__main__':
-    client = SupabaseMCPClient()
+    client = CurlMCPClient()
     client.run()
